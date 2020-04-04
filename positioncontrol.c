@@ -16,5 +16,5 @@ int setPositionGains(int kp, int kd, int ki)
 PIDInfo getPositionGains() { return posGains; }
 
 void setTrajSize(int size) {
-    trajectory  = (int*)malloc(size * sizeof(int))
+    trajectory  = (int*)malloc(size * sizeof(int));
 }
