@@ -137,16 +137,15 @@ int main()
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%f", &angle);
         // Call some setAngle() function
+        sprintf(buffer, "%f\r\n", angle); //only for testing
+        NU32_WriteUART3(buffer);
         break;
       }
 
       case 'm':
       {
         // Load step trajectory
-        NU32_ReadUART3(buffer, BUF_SIZE);
-        int numSamples = 0;
-        sscanf(buffer, "%d", &numSamples);
-        float traj[numSamples];
+        
         break;
       }
 

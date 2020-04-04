@@ -4,6 +4,6 @@
 
 int setPositionGains(int kp, int kd, int ki);
 PIDInfo getPositionGains();
-int loadTrajectory(float trajectory[]);
+void setTrajSize(int size);
 
 #endif

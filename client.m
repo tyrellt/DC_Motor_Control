@@ -12,7 +12,10 @@ function client()
 %       client('COM3') (PC)
 %
 %   For convenience, you may want to change this so that the port is hardcoded.
-   
+
+% constants
+MAX_TRAJ_POSITIONS = 20;    % if this is changed, it needs to be changed in main.c as well
+
 % Opening COM connection
 if ~isempty(instrfind)
     fclose(instrfind);
@@ -127,15 +130,34 @@ while ~has_quit
         case 'l'
             % Go to angle (deg)
             n = input('Enter desired angle (in degrees): ');
-            fprintf(mySerial, '%f', n);
+            fprintf(mySerial, '%f\n', n);
+            n = fscanf(mySerial, '%f'); % just for testing. 
+                                        % the pic sends back the value
+            fprintf('value sent to PIC: %f\n', n);
 
         case 'm'
             % Load step trajectory
-            traj = input('Enter step trajectory, in sec and degrees [time1, ang1; time2, ang2; ...]: ');
-            traj;
+            traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
+            if (traj(end,1) > 10)
+                fprintf('Error: Maximum trajectory time is 10 seconds\n');
+            else
+                % call genRef with step option and send result to PIC
+                refTraj = genRef(traj, 'step');
+                fprintf(mySerial, '%d', size(refTraj));
+            end
+            
+            
 
         case 'n'
             % Load cubic trajectory
+            traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
+            numPoints = size(traj,1);
+            if (traj(end,1) > 10)
+                fprintf('Error: Maximum trajectory time is 10 seconds\n');
+            else
+                % call genRef with cubic option and send result to PIC
+                genRef(traj, 'cubic');
+            end
 
         case 'o'
             % Execute trajectory

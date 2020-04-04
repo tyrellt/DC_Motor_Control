@@ -1,6 +1,9 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
+#define MOTOR_SERVO_RATE 200
+#define MAX_TRAJ_SAMPLES = 10 * MOTOR_SERVO_RATE    // Max trajectory duration is 10 seconds
+ 
 typedef struct {
     int kp;
     int kd;

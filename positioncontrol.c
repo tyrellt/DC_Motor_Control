@@ -1,6 +1,7 @@
 #include "positioncontrol.h"
 
 static PIDInfo posGains;
+static int* trajectory;
 
 int setPositionGains(int kp, int kd, int ki) 
 { 
@@ -14,6 +15,6 @@ int setPositionGains(int kp, int kd, int ki)
 
 PIDInfo getPositionGains() { return posGains; }
 
-int loadTrajectory(float trajectory[]) {
-    
+void setTrajSize(int size) {
+    trajectory  = (int*)malloc(size * sizeof(int))
 }
