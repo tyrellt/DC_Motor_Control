@@ -4,6 +4,7 @@
 
 int setPositionGains(int kp, int kd, int ki);
 PIDInfo getPositionGains();
-void setTrajSize(int size);
+int setTrajSize(int size);
+int addTrajPoint(int point, int index);
 
 #endif

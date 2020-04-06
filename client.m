@@ -28,7 +28,7 @@ fprintf('Opening port %s....\n',port);
 
 % settings for opening the serial port. baud rate 230400, hardware flow control
 % wait up to 120 seconds for data before timing out
-mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',5); 
+mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',2); 
 % opens serial connection
 fopen(mySerial);
 % closes serial port when function exits
@@ -140,24 +140,25 @@ while ~has_quit
             traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
             if (traj(end,1) > 10)
                 fprintf('Error: Maximum trajectory time is 10 seconds\n');
+                fprintf(mySerial, '%d\n', 0);    % error code for pic
             else
                 % call genRef with step option and send result to PIC
-                refTraj = genRef(traj, 'step');
-                fprintf(mySerial, '%d', size(refTraj));
+                refTraj = genRef(traj, 'step') * 100;   % refTraj stored as integer
+                                                        % in hundredths of
+                                                        % a degree
+                                                        
+                fprintf(mySerial, '%d\n', length(refTraj)); % send length of trajectory so memory can be allocated
+                % fprintf(mySerial, '%d\n', refTraj);
+                for i = 1:length(refTraj)
+                    fprintf(mySerial, '%d\n', refTraj(i));   % this should send every entry in refTraj
+                    fprintf('Point stored in PIC: %d\n', fscanf(mySerial, '%d'));
+                end
             end
             
             
 
         case 'n'
             % Load cubic trajectory
-            traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
-            numPoints = size(traj,1);
-            if (traj(end,1) > 10)
-                fprintf('Error: Maximum trajectory time is 10 seconds\n');
-            else
-                % call genRef with cubic option and send result to PIC
-                genRef(traj, 'cubic');
-            end
 
         case 'o'
             % Execute trajectory
@@ -202,6 +203,8 @@ while ~has_quit
         case 'y'                         % example operation
             n = input('Enter numbers: ', 's'); % get the numbers to send
             fprintf(mySerial, '%s\n',n); % send the numbers
+            %fprintf(mySerial, '%d\n', 4);
+            %fprintf(mySerial, '%d\n', 5);
             n = fscanf(mySerial,'%d');   % get the sum back
             fprintf('Read: %d\n',n);     % print it to the screen
   

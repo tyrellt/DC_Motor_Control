@@ -145,7 +145,23 @@ int main()
       case 'm':
       {
         // Load step trajectory
-        
+        int numSamples = 0;
+        NU32_ReadUART3(buffer, BUF_SIZE);
+        sscanf(buffer, "%d", &numSamples);
+        if (numSamples > 0) {
+          //setTrajSize(numSamples);
+          //sprintf(buffer, "%d\r\n", setTrajSize(numSamples));
+          //NU32_WriteUART3(buffer);
+          int sample = 0;
+          int i;
+          for (i = 0; i < numSamples; i++)
+          {
+            NU32_ReadUART3(buffer, BUF_SIZE);
+            sscanf(buffer, "%d", &sample);
+            sprintf(buffer, "%d\r\n", addTrajPoint(sample, i));
+            NU32_WriteUART3(buffer);
+          }
+        }
         break;
       }
 
@@ -188,7 +204,9 @@ int main()
       {
         int n1, n2 = 0;
         NU32_ReadUART3(buffer,BUF_SIZE);
-        sscanf(buffer, "%d %d", &n1, &n2);
+        sscanf(buffer, "%d", &n1);
+        NU32_ReadUART3(buffer,BUF_SIZE);
+        sscanf(buffer, "%d", &n2);
         sprintf(buffer,"%d\r\n", n1 + n2); // return the two numbers added together
         NU32_WriteUART3(buffer);
         break;
