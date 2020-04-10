@@ -71,6 +71,9 @@ while ~has_quit
 
         case 'e'
             % Reset encoder
+            % read encoder counts to confirm reset
+            n = fscanf(mySerial,'%d');
+            fprintf('Counts reset. Encoder Counts: %d\n',n);
 
         case 'f'
             % Set PWM
@@ -137,28 +140,11 @@ while ~has_quit
 
         case 'm'
             % Load step trajectory
-            traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
-            if (traj(end,1) > 10)
-                fprintf('Error: Maximum trajectory time is 10 seconds\n');
-                fprintf(mySerial, '%d\n', 0);    % error code for pic
-            else
-                % call genRef with step option and send result to PIC
-                refTraj = genRef(traj, 'step') * 100;   % refTraj stored as integer
-                                                        % in hundredths of
-                                                        % a degree
-                                                        
-                fprintf(mySerial, '%d\n', length(refTraj)); % send length of trajectory so memory can be allocated
-                % fprintf(mySerial, '%d\n', refTraj);
-                for i = 1:length(refTraj)
-                    fprintf(mySerial, '%d\n', refTraj(i));   % this should send every entry in refTraj
-                    fprintf('Point stored in PIC: %d\n', fscanf(mySerial, '%d'));
-                end
-            end
-            
-            
+            loadTrajectory(mySerial, 'step');
 
         case 'n'
             % Load cubic trajectory
+            loadTrajectory(mySerial, 'cubic');
 
         case 'o'
             % Execute trajectory
@@ -210,8 +196,29 @@ while ~has_quit
   
         otherwise
             fprintf('Invalid Selection %c\n', selection);
-            endq
             
     end
 
 end
+end
+
+function loadTrajectory(serial, type)
+    traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
+    if (traj(end,1) > 10)
+        fprintf('Error: Maximum trajectory time is 10 seconds\n');
+        fprintf(serial, '%d\n', 0);    % error code for pic
+    else
+        % call genRef with step option and send result to PIC
+        refTraj = genRef(traj, type) * 100;   % refTraj stored as integer
+                                                % in hundredths of
+                                                % a degree
+
+        fprintf(serial, '%d\n', length(refTraj)); % send length
+        for i = 1:length(refTraj)
+            fprintf(serial, '%d\n', refTraj(i));
+            fprintf('Point stored in PIC: %d\n', fscanf(serial, '%d'));
+        end
+    end
+end
+
+

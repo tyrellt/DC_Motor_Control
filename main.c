@@ -18,7 +18,9 @@ int main()
   setMode(IDLE);
 
   __builtin_disable_interrupts();
-  // in future, initialize modules or peripherals here
+  // initialize modules or peripherals
+  encoderInit();
+
   __builtin_enable_interrupts();
 
   while(1)
@@ -61,6 +63,11 @@ int main()
       case 'e':
       {
         // Reset encoder
+        resetEncoder();
+        // send counts to user to confirm reset
+        sprintf(buffer,"%d\r\n", readEncoderCounts());
+        NU32_WriteUART3(buffer);
+
         break;
       }
 
@@ -143,6 +150,7 @@ int main()
       }
 
       case 'm':
+      case 'n':
       {
         // Load step trajectory
         int numSamples = 0;
@@ -162,12 +170,6 @@ int main()
             NU32_WriteUART3(buffer);
           }
         }
-        break;
-      }
-
-      case 'n':
-      {
-        // Load cubic trajectory
         break;
       }
 
