@@ -5,9 +5,9 @@
 #define MAX_TRAJ_SAMPLES = 10 * MOTOR_SERVO_RATE    // Max trajectory duration is 10 seconds
  
 typedef struct {
-    int kp;
-    int kd;
-    int ki;
+    float kp;
+    float kd;
+    float ki;
 } PIDInfo;
 
 typedef enum {

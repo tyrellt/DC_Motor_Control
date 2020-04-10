@@ -1,6 +1,9 @@
 #include "currentcontrol.h"
 
-static PIDInfo currentGains;
+// Variables needed in ISR, so volitile
+static volatile float kp;
+static volatile float ki;
+//static volatile float kd;
 
 int setPWM(int dutyCycle) {
     if (dutyCycle > 100 || dutyCycle < -100)
@@ -8,12 +11,18 @@ int setPWM(int dutyCycle) {
     else
         return 1;   // success
 }
-int setCurrentGains(int kp, int ki) { 
-    PIDInfo gains;
-    gains.kp = kp;
-    gains.ki = ki;
-    currentGains = gains; 
-    return kp + ki;
+float setCurrentGains(float newKp, float newKi) 
+{ 
+    kp = newKp;
+    ki = newKi;
+    return kp + ki;   // successfully set
 }
 
-PIDInfo getCurrentGains() { return currentGains; }
+PIDInfo getCurrentGains() 
+{ 
+    PIDInfo currentGains;
+    currentGains.kp = kp;
+    currentGains.ki = ki;
+
+    return currentGains;
+}

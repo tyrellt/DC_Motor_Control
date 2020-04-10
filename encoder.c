@@ -1,8 +1,6 @@
 #include "encoder.h"
 #include <xc.h>
 
-#define COUNTS_PER_REV 4733
-
 static int encoderCommand(int read) { // send a command to the encoder chip
                                        // 0 = reset count to 32,768, 1 = return the count
   SPI4BUF = read;                      // send the command
@@ -40,7 +38,7 @@ float readEncoder()
     int counts = readEncoderCounts();
     // convert counts to degrees and return
 
-    return (counts - 32768) / (float)COUNTS_PER_REV * 360.0;  // 4 is for quadrature encoder
+    return (counts - 32768) * COUNTS_TO_DEG; // Convert counts to degrees
 }
 
 void resetEncoder()

@@ -91,9 +91,9 @@ while ~has_quit
             n1 = input('Enter Kp gain: ');
             n2 = input('Enter Ki gain: ');
             n = [n1; n2];
-            fprintf(mySerial, '%d %d\n', n);
-            n = fscanf(mySerial,'%d');   % get status code
-            if (n ~= n1 + n2) % failure code
+            fprintf(mySerial, '%f %f\n', n);
+            n = fscanf(mySerial,'%f');   % get sum
+            if (n ~= n1 + n2)
                 fprintf('Current gain set FAILED.');
             else
                 fprintf('Current gains successfully set.');
@@ -101,9 +101,9 @@ while ~has_quit
 
         case 'h'
             % Get current gains
-            n = fscanf(mySerial,'%d %d');
-            fprintf('Current gains: kp: %d\n', n(1));
-            fprintf('               ki: %d\n', n(2));
+            n = fscanf(mySerial,'%f %f');
+            fprintf('Current gains: kp: %f\n', n(1));
+            fprintf('               ki: %f\n', n(2));
 
         case 'i'
             % Set position gains
@@ -111,20 +111,20 @@ while ~has_quit
             n2 = input('Enter Kd gain: ');
             n3 = input('Enter Ki gain: ');
             n = [n1; n2; n3];
-            fprintf(mySerial, '%d %d %d\n', n);
-            n = fscanf(mySerial,'%d');   % get status code
-            if (n ~= n1 + n2 + n3) % failure code
-                fprintf('Current gain set FAILED.');
+            fprintf(mySerial, '%f %f %f\n', n);
+            n = fscanf(mySerial,'%f');   % get sum
+            if (n ~= n1 + n2 + n3)
+                fprintf('Position gain set FAILED.');
             else
-                fprintf('Current gains successfully set.');
+                fprintf('Position gains successfully set.');
             end
 
         case 'j'
             % Get position gains
-            n = fscanf(mySerial,'%d %d %d');
-            fprintf('Current gains: kp: %d\n', n(1));
-            fprintf('               kd: %d\n', n(2));
-            fprintf('               ki: %d\n', n(3));
+            n = fscanf(mySerial,'%f %f %f');
+            fprintf('Position gains: kp: %f\n', n(1));
+            fprintf('                kd: %f\n', n(2));
+            fprintf('                ki: %f\n', n(3));
 
         case 'k'
             % Test current control

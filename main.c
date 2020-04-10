@@ -20,6 +20,7 @@ int main()
   __builtin_disable_interrupts();
   // initialize modules or peripherals
   encoderInit();
+  positionCtrlInit();
 
   __builtin_enable_interrupts();
 
@@ -86,12 +87,12 @@ int main()
       case 'g':
       {
         // Set current gains
-        int kp = 0;
-        int ki = 0;
+        float kp = 0;
+        float ki = 0;
         NU32_ReadUART3(buffer,BUF_SIZE);
-        sscanf(buffer, "%d %d", &kp, &ki);
-        int status = setCurrentGains(kp, ki);
-        sprintf(buffer,"%d\r\n", status);
+        sscanf(buffer, "%f %f", &kp, &ki);
+        float sum = setCurrentGains(kp, ki); // send back sum to confirm they were set correctly
+        sprintf(buffer,"%f\r\n", sum);
         NU32_WriteUART3(buffer);
         break;
       }
@@ -100,7 +101,7 @@ int main()
       {
         // Get current gains
         PIDInfo gains = getCurrentGains();
-        sprintf(buffer, "%d %d\r\n", gains.kp, gains.ki);
+        sprintf(buffer, "%f %f\r\n", gains.kp, gains.ki);
         NU32_WriteUART3(buffer);
         break;
       }
@@ -108,13 +109,14 @@ int main()
       case 'i':
       {
         // Set position gains
-        int kp = 0;
-        int kd = 0;
-        int ki = 0;
+        float kp = 0;
+        float kd = 0;
+        float ki = 0;
         NU32_ReadUART3(buffer,BUF_SIZE);
-        sscanf(buffer, "%d %d %d", &kp, &kd, &ki);
-        int status = setPositionGains(kp, kd, ki);
-        sprintf(buffer,"%d\r\n", status);
+        sscanf(buffer, "%f %f %f", &kp, &kd, &ki);
+
+        float sum = setPositionGains(kp, kd, ki); // send back sum to confirm they were set correctly
+        sprintf(buffer,"%f\r\n", sum);
         NU32_WriteUART3(buffer);
         break;
       }
@@ -123,7 +125,7 @@ int main()
       {
         // Get position gains
         PIDInfo gains = getPositionGains();
-        sprintf(buffer, "%d %d %d\r\n", gains.kp, gains.kd, gains.ki);
+        sprintf(buffer, "%f %f %f\r\n", gains.kp, gains.kd, gains.ki);
         NU32_WriteUART3(buffer);
         break;
       }
@@ -143,7 +145,9 @@ int main()
         float angle = 0.0;
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%f", &angle);
-        // Call some setAngle() function
+        
+        setHoldAngle(angle);
+
         sprintf(buffer, "%f\r\n", angle); //only for testing
         NU32_WriteUART3(buffer);
         break;

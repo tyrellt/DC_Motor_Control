@@ -2,9 +2,15 @@
 #define POSITIONCONTROL_H_
 #include "utilities.h"
 
-int setPositionGains(int kp, int kd, int ki);
+// Initializes timer for 200 Hz interrupt,
+int positionCtrlInit();
+
+float setPositionGains(float kp, float kd, float ki);
 PIDInfo getPositionGains();
 int setTrajSize(int size);
 int addTrajPoint(int point, int index);
+void setHoldAngle(float angle);
+
+
 
 #endif
