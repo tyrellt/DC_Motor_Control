@@ -4,6 +4,7 @@
 #include "utilities.h"
 
 int setPWM(int dutyCycle);
+void PWMInit();
 float setCurrentGains(float kp, float ki);
 PIDInfo getCurrentGains();
 
