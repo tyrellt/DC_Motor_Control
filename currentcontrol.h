@@ -5,6 +5,7 @@
 
 int setPWM(int dutyCycle);
 void PWMInit();
+void currentCntlInit();
 float setCurrentGains(float kp, float ki);
 PIDInfo getCurrentGains();
 

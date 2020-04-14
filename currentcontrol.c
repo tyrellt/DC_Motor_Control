@@ -1,8 +1,9 @@
 #include "currentcontrol.h"
-#include <xc.h>
+#include "utilities.h"
+#include "NU32.h"
 
-#define PERIOD_5HZ 62499    // PR = (desiredPeriod / prescaler * 80 MHz) - 1
-
+#define PERIOD_5HZ 62499    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 256
+#define PERIOD_5KHZ 1999    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 8
 #define PERIOD_20KHZ 3999   // PR = (desiredPeriod / prescaler * 80 MHz) - 1
 
 
@@ -10,22 +11,25 @@
 static volatile float kp;
 static volatile float ki;
 //static volatile float kd;
+static volatile int userDutyCycle = 0;
 
 int setPWM(int dutyCycle) {
-    int direction = 1;  // default direction
+    int reverse = 0;  // default is forward
 
     if (dutyCycle > 100 || dutyCycle < -100)
         return 0;   // failure
     
     if (dutyCycle < 0)
     {
-        direction = 0;      // negative direction
+        reverse = 1;      // negative direction
         dutyCycle *= -1;    // make duty cycle positive
     }
 
-    LATDbits.LATD1 = direction;
+    LATDbits.LATD1 = reverse;
     
     OC1RS = (int)((float)dutyCycle/100.0*(float)(PERIOD_20KHZ+1));
+    setMode(PWM);
+
     return 1;   // success
 }
 
@@ -46,7 +50,49 @@ void PWMInit()
 
     // Initialize motor direction bit
     TRISDbits.TRISD1 = 0;   // set RD0 as digital output
-    LATDbits.LATD1 = 1;     // positive direction
+    LATDbits.LATD1 = 0;     // positive direction. reverse is false
+}
+
+void currentControlInit()
+{
+    // Timer1 setup
+
+    PR1 = PERIOD_5KHZ;              //              set period register
+    TMR1 = 0;                       //              initialize count to 0
+    T1CONbits.ON = 1;               //              turn on Timer1
+    T1CONbits.TCKPS = 0b01;          // 1:8 prescaler select
+    //T1CONbits.TCKPS = 0b11;        // 256 prescaler. ONLY FOR TESTING!!
+
+    IPC1bits.T1IP = 6;              // INT step 4: priority
+    IPC1bits.T1IS = 0;              //             subpriority
+    IFS0bits.T1IF = 0;              // INT step 5: clear interrupt flag
+    IEC0bits.T1IE = 1;              // Enable interrupt
+}
+
+void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void) 
+{
+    switch(getMode())
+    {
+        case IDLE:
+        {
+            OC1RS = 0;  // set duty cycle to 0
+            break;
+        }
+
+        case PWM:
+        {
+            // do nothing. The setPWM function sets the duty cycle
+            break;
+        }
+
+        default:
+        {
+
+            break;
+        }
+    }
+
+    IFS0bits.T1IF = 0;  // clear interrupt flag
 }
 
 float setCurrentGains(float newKp, float newKi) 

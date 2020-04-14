@@ -23,6 +23,7 @@ int main()
   positionCtrlInit();
   iSenseInit();
   PWMInit();
+  currentControlInit();
 
   __builtin_enable_interrupts();
 
@@ -82,7 +83,7 @@ int main()
         sscanf(buffer, "%d", &dutyCycle);
 
         int status = setPWM(dutyCycle);
-        
+
         sprintf(buffer,"%d\r\n", status);
         NU32_WriteUART3(buffer);
         break;
