@@ -1,7 +1,8 @@
 #ifndef ISENSE_H_
 #define ISENSE_H_
 
-int readCurrentCounts();
+unsigned int readCurrentCounts();
 float readCurrent();
+void iSenseInit();
 
 #endif

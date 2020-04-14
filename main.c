@@ -21,6 +21,7 @@ int main()
   // initialize modules or peripherals
   encoderInit();
   positionCtrlInit();
+  iSenseInit();
 
   __builtin_enable_interrupts();
 

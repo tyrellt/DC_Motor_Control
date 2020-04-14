@@ -1,4 +1,5 @@
 #include "currentcontrol.h"
+#include <xc.h>
 
 // Variables needed in ISR, so volitile
 static volatile float kp;
