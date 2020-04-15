@@ -43,7 +43,7 @@ int main()
       case 'b':
       {
         // Read current sensor (mA)
-        sprintf(buffer,"%f\r\n", readCurrent());
+        sprintf(buffer,"%f\r\n", getSampledCurrent());
         NU32_WriteUART3(buffer);
         break;
       }

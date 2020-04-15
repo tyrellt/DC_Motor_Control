@@ -13,6 +13,7 @@ static volatile float kp;
 static volatile float ki;
 //static volatile float kd;
 static volatile float refCurrent = 0.0;
+static volatile float actualCurrent = 0.0;
 
 
 int setPWM(int dutyCycle) {
@@ -73,6 +74,7 @@ void currentControlInit()
 
 void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void) 
 {
+    actualCurrent = readCurrent();  // get filtered current reading
     switch(getMode())
     {
         case IDLE:
@@ -110,7 +112,7 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             static float ePrev = 0;      // error in previous iteration
             static float eInt = 0;       // initial error integral
 
-            float e = refCurrent - readCurrent();    // error in mA
+            float e = refCurrent - actualCurrent;    // error in mA
             eInt = eInt + e;                  // calculate new error integral
             float u = kp*e + ki*eInt;     // PI control signal
             
@@ -152,6 +154,10 @@ PIDInfo getCurrentGains()
 }
 
 void setRefCurrent(float newCurrent) 
-{ 
+{
     refCurrent = newCurrent;
+}
+
+float getSampledCurrent() {
+    return actualCurrent;
 }

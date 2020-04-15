@@ -11,6 +11,6 @@ typedef struct {
 
 void firInit(firFilter *filter, float *coefficients, int order);
 void shiftInSample(firFilter *filter, float sample);
-float applyFIR(firFilter *filter);
+float applyFIR(firFilter *filter, float sample);
 
 #endif

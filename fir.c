@@ -25,8 +25,9 @@ void shiftInSample(firFilter *filter, float sample)
 }
 
 // Apply FIR summation using samples from buffer and filter coefficients
-float applyFIR(firFilter *filter)
+float applyFIR(firFilter *filter, float sample)
 {
+    shiftInSample(filter, sample);
     float output = 0.0;
     int i;
     for (i = 0; i < filter->p + 1; i++)
