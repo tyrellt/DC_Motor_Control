@@ -166,9 +166,6 @@ int main()
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%d", &numSamples);
         if (numSamples > 0) {
-          //setTrajSize(numSamples);
-          //sprintf(buffer, "%d\r\n", setTrajSize(numSamples));
-          //NU32_WriteUART3(buffer);
           int sample = 0;
           int i;
           for (i = 0; i < numSamples; i++)

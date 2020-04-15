@@ -7,7 +7,6 @@ int positionCtrlInit();
 
 float setPositionGains(float kp, float kd, float ki);
 PIDInfo getPositionGains();
-int setTrajSize(int size);
 int addTrajPoint(int point, int index);
 void setHoldAngle(float angle);
 

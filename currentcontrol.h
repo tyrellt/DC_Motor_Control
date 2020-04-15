@@ -8,6 +8,7 @@ void PWMInit();
 void currentCntlInit();
 float setCurrentGains(float kp, float ki);
 PIDInfo getCurrentGains();
+void setRefCurrent(float newCurrent);
 
 
 

@@ -1,6 +1,7 @@
 #include "currentcontrol.h"
 #include "utilities.h"
 #include "NU32.h"
+#include "isense.h"
 
 #define PERIOD_5HZ 62499    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 256
 #define PERIOD_5KHZ 1999    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 8
@@ -11,7 +12,8 @@
 static volatile float kp;
 static volatile float ki;
 //static volatile float kd;
-static volatile int userDutyCycle = 0;
+static volatile float refCurrent = 0.0;
+
 
 int setPWM(int dutyCycle) {
     int reverse = 0;  // default is forward
@@ -85,11 +87,49 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             break;
         }
 
+        case ITEST:
+        {
+            static int count = 0;
+            if (count == 0)
+            {
+                refCurrent = 200.0;
+            }
+            else if (count >= 99)
+            {
+                setMode(IDLE);
+                count = 0;
+                //sendDataToMatlab()
+            }
+            
+            else if (count % 25 == 0)    // execute conditional when count is at 25, 50, and 75
+            {
+                refCurrent *= -1.0;
+            }
+
+            // PI control
+            static float ePrev = 0;      // error in previous iteration
+            static float eInt = 0;       // initial error integral
+
+            float e = refCurrent - readCurrent();    // error in mA
+            eInt = eInt + e;                  // calculate new error integral
+            float u = kp*e + ki*eInt;     // PI control signal
+            
+            
+            //savaDataToArray()
+
+            //OC1RS = u/maxu*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+
+            count++;
+
+            break;
+        }
+
         default:
         {
 
             break;
         }
+
     }
 
     IFS0bits.T1IF = 0;  // clear interrupt flag
@@ -109,4 +149,9 @@ PIDInfo getCurrentGains()
     currentGains.ki = ki;
 
     return currentGains;
+}
+
+void setRefCurrent(float newCurrent) 
+{ 
+    refCurrent = newCurrent;
 }

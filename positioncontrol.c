@@ -14,8 +14,6 @@ static volatile float kp;
 static volatile float ki;
 static volatile float kd;
 static volatile float holdAngle;      // desired hold angle (set by user)
-static volatile float ePrev = 0;      // error in previous iteration
-static volatile float eInt = 0;       // initial error integral
 
 static int trajectory[2000]; // TODO: I feel like this is a waste of memory
 
@@ -37,13 +35,17 @@ int positionCtrlInit()
 
 void __ISR(_TIMER_5_VECTOR, IPL5SOFT) positionCtrlLoop(void) 
 {
+    static float ePrev = 0;      // error in previous iteration
+    static float eInt = 0;       // initial error integral
+    // TODO: reset these values after a test is done...
 
     if (getMode() == HOLD)
     {
         // PID control
         float e = holdAngle - readEncoder();    // error in degrees
         float edot = e - ePrev;                 // calculate derivative
-        float eInt = eInt + e;                  // calculate new error sum
+                                                // TODO: Add filtering on derivative term
+        eInt = eInt + e;                  // calculate new error sum
         float u = kp*e + ki*eInt + kd*edot;     // PID control signal
         
         // some setCurrent(u) function
@@ -71,14 +73,6 @@ PIDInfo getPositionGains()
     posGains.kd = kd;
 
     return posGains;
-}
-
-int setTrajSize(int size) {
-    //trajectory  = (int*)malloc(1 * sizeof(int));
-    //if (trajectory == NULL) {
-    //    return -1;
-    //}
-    return size;
 }
 
 int addTrajPoint(int point, int index)

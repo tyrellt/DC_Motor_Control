@@ -1,11 +1,15 @@
 #include "isense.h"
 #include <xc.h>
+#include "fir.h"
+
+#define FILTER_ORDER 4
+static firFilter filter;
 
 unsigned int readCurrentCounts()
 {
     // assume manual sampling, automatic conversion
     AD1CHSbits.CH0SA = 9; // connect chosen pin to MUXA for sampling
-    AD1CON1bits.SAMP = 1; // start sampling
+    //AD1CON1bits.SAMP = 1; // start sampling
 
     while (!AD1CON1bits.DONE) {
         ; // wait for the conversion process to finish
@@ -13,6 +17,7 @@ unsigned int readCurrentCounts()
     return ADC1BUF0; // read the buffer with the result
 }
 
+// returns current in mA
 float readCurrent()
 {
     int total = 0;
@@ -24,7 +29,7 @@ float readCurrent()
     }
 
     float average = (float)total / (float)numSamples;
-    return 4.2286 * average - 2152.3;   // Equation from linear regression test
+    return 4.7433 * average - 2401.5;   // Equation from linear regression test
 }
 
 void iSenseInit() 
@@ -35,4 +40,8 @@ void iSenseInit()
     AD1CON1bits.SSRC = 0b111;               // Automatic conversion
     AD1CON1bits.ASAM = 1;                   // Auto Sampling
     AD1CON1bits.ADON = 1;                   // turn on A/D converter
+
+    float b[FILTER_ORDER + 1] = {0.0345, 0.2405, 0.45, 0.2405, 0.0345}; // 200 Hz cutoff
+        
+    firInit(&filter, b, FILTER_ORDER);
 }
