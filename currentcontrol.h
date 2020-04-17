@@ -3,6 +3,8 @@
 
 #include "utilities.h"
 
+#define MAX_TEST_SAMPLES 10000
+
 int setPWM(int dutyCycle);
 void PWMInit();
 void currentCntlInit();
@@ -12,6 +14,10 @@ void setRefCurrent(float newCurrent);
 
 // returns filtered current sampled at 5kHz in current control loop
 float getSampledCurrent();
+
+// functions for sample testing
+void setNumTestSamples(int n);
+void getTestSample(int index, float *sample, float *ref);
 
 
 

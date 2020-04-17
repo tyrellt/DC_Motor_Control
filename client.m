@@ -28,7 +28,7 @@ fprintf('Opening port %s....\n',port);
 
 % settings for opening the serial port. baud rate 230400, hardware flow control
 % wait up to 120 seconds for data before timing out
-mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',2); 
+mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',5); 
 % opens serial connection
 fopen(mySerial);
 % closes serial port when function exits
@@ -57,7 +57,7 @@ while ~has_quit
         case 'b'
             % Read current sensor (mA)
             n = fscanf(mySerial,'%f');   % get current reading back
-            fprintf('Current: %f\n',n);     % print it to the screen
+            fprintf('Current: %.2f mA\n',n);     % print it to the screen
 
         case 'c'
             % Read encoder (counts)
@@ -128,7 +128,25 @@ while ~has_quit
 
         case 'k'
             % Test current control
-            % read data from test and plot it
+            currentSamples = [];
+            refSignal = [];
+            for i = 1:100
+                 n = fscanf(mySerial,'%f %f');
+                 currentSamples = [currentSamples n(1)];
+                 refSignal = [refSignal n(2)];
+            end
+            
+            close all;
+            figure(1);
+            hold on;
+            t = linspace(0, 20, 100); % time in ms
+            plot(t, currentSamples);
+            plot(t, refSignal);
+            ylabel('Current (mA)');
+            xlabel('Time (ms)');
+            legend('actual', 'reference');
+            hold off;
+            
 
         case 'l'
             % Go to angle (deg)
@@ -172,6 +190,26 @@ while ~has_quit
             end
             fprintf('mode: %s\n', mode);
             
+        case 's'
+            % Sample current sensor for use with filter calculations
+            numSamples = input('Enter number of samples: ');
+            fprintf(mySerial, '%d\n', numSamples);
+            currentSamples = [];
+            for i = 1:numSamples
+                 n = fscanf(mySerial,'%f');
+                 currentSamples = [currentSamples n];
+            end
+            
+            %plotFFT(currentSamples);
+            close all;
+            figure(1);
+            hold on;
+            plot(currentSamples);
+            leng = length(currentSamples);
+            plot(zeros(1,leng));
+            ylabel('current (mA)');
+            xlabel('sample number');
+            
         case 'x'    % display menu
             fprintf('PIC32 MOTOR DRIVER INTERFACE\n\n');
             % display the menu options; this list will grow
@@ -184,7 +222,7 @@ while ~has_quit
             fprintf('     m: Load step trajectory       n: Load cubic trajectory\n');
             fprintf('     o: Execute trajectory         p: Unpower the motor\n');
             fprintf('     q: Quit client                r: Get mode\n');
-            fprintf('     x: Display Menu\n');
+            fprintf('     s: Sample for filter          x: Display Menu\n');
   
         case 'y'                         % example operation
             n = input('Enter numbers: ', 's'); % get the numbers to send

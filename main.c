@@ -140,6 +140,19 @@ int main()
         // Test current control
         setMode(ITEST);
         
+        while(getMode() == ITEST);  // wait for test to finish
+
+        // send samples to client
+        int i;
+        float sample;
+        float refSignal;
+        for (i = 0; i < 100; i++)  // ITEST is hardcoded for 100 samples (.02 seconds)
+        {
+          getTestSample(i, &sample, &refSignal);
+          sprintf(buffer, "%f %f\r\n", sample, refSignal);
+          NU32_WriteUART3(buffer);
+        }
+        
         break;
       }
 
@@ -205,6 +218,35 @@ int main()
         // Get mode
         sprintf(buffer, "%d \r\n", getMode());
         NU32_WriteUART3(buffer);
+        break;
+      }
+
+      case 's':
+      {
+        // Sample current sensor for use with filter calculations
+        int numSamples;
+        NU32_ReadUART3(buffer, BUF_SIZE);
+        sscanf(buffer, "%d", &numSamples);
+
+        setNumTestSamples(numSamples);
+        setPWM(-100); // set duty cycle for testing
+        setMode(SAMPLE);
+        while (getMode() == SAMPLE)
+        {
+          // wait until sampling is done
+        }
+
+        // send samples to client
+        int i;
+        float sample;
+        float refSignal;
+        for (i = 0; i < numSamples; i++)
+        {
+          getTestSample(i, &sample, &refSignal);
+          sprintf(buffer, "%f\r\n", sample);
+          NU32_WriteUART3(buffer);
+        }
+
         break;
       }
       

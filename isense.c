@@ -3,7 +3,11 @@
 #include "fir.h"
 
 #define FILTER_ORDER 4
+#define COUNTS_AT_0MA 504
+#define MA_PER_COUNT 4.7433
+
 static firFilter filter;
+
 
 unsigned int readCurrentCounts()
 {
@@ -31,7 +35,7 @@ float readCurrent()
     float average = (float)total / (float)numSamples;
     float filteredAvg = applyFIR(&filter, average);     // filter reading with 200 Hz cutoff
 
-    return 4.7433 * filteredAvg - 2401.5;   // Equation from linear regression test
+    return (filteredAvg - COUNTS_AT_0MA) * MA_PER_COUNT;   // Equation from linear regression test
 }
 
 void iSenseInit() 

@@ -2,10 +2,14 @@
 #include "utilities.h"
 #include "NU32.h"
 #include "isense.h"
+#include <math.h>
 
 #define PERIOD_5HZ 62499    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 256
 #define PERIOD_5KHZ 1999    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 8
 #define PERIOD_20KHZ 3999   // PR = (desiredPeriod / prescaler * 80 MHz) - 1
+
+#define REVERSE_BIT LATDbits.LATD1
+#define MAX_U 100.0
 
 
 // Variables needed in ISR, so volitile
@@ -15,20 +19,25 @@ static volatile float ki;
 static volatile float refCurrent = 0.0;
 static volatile float actualCurrent = 0.0;
 
+// for sample testing
+static float testSamples[MAX_TEST_SAMPLES];
+static float testRef[MAX_TEST_SAMPLES];
+static volatile int numTestSamples = 0;
+
 
 int setPWM(int dutyCycle) {
-    int reverse = 0;  // default is forward
+    int isReverse = 0;  // default is forward
 
     if (dutyCycle > 100 || dutyCycle < -100)
         return 0;   // failure
     
     if (dutyCycle < 0)
     {
-        reverse = 1;      // negative direction
+        isReverse = 1;      // negative direction
         dutyCycle *= -1;    // make duty cycle positive
     }
 
-    LATDbits.LATD1 = reverse;
+    REVERSE_BIT = isReverse;
     
     OC1RS = (int)((float)dutyCycle/100.0*(float)(PERIOD_20KHZ+1));
     setMode(PWM);
@@ -53,7 +62,11 @@ void PWMInit()
 
     // Initialize motor direction bit
     TRISDbits.TRISD1 = 0;   // set RD0 as digital output
-    LATDbits.LATD1 = 0;     // positive direction. reverse is false
+    REVERSE_BIT = 0;     // positive direction. reverse is false
+
+    // Initialize H-Bridge mode bit
+    TRISDbits.TRISD2 = 0;   // set RD2 as digital output
+    LATDbits.LATD2 = 1;     // set it high, because H-Bridge mode should always be 1
 }
 
 void currentControlInit()
@@ -100,7 +113,7 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             {
                 setMode(IDLE);
                 count = 0;
-                //sendDataToMatlab()
+                break;
             }
             
             else if (count % 25 == 0)    // execute conditional when count is at 25, 50, and 75
@@ -109,21 +122,101 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             }
 
             // PI control
-            static float ePrev = 0;      // error in previous iteration
             static float eInt = 0;       // initial error integral
 
             float e = refCurrent - actualCurrent;    // error in mA
             eInt = eInt + e;                  // calculate new error integral
             float u = kp*e + ki*eInt;     // PI control signal
             
-            
-            //savaDataToArray()
+            int isReverse = 0;
+            if (u < 0.0)
+            {
+                isReverse = 1;
+                u *= -1;    // make u positive
+            }
 
-            //OC1RS = u/maxu*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+            if (u > MAX_U)
+            {
+                u = MAX_U;    // saturate at 1.0;
+            }
+
+            REVERSE_BIT = isReverse;
+            OC1RS = u/MAX_U*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+
+            // store actual and reference data
+            testSamples[count] = actualCurrent;
+            testRef[count] = refCurrent;
 
             count++;
 
             break;
+        }
+
+        case SAMPLE:
+        {
+            static int iCurrentSample = 0;
+            if (iCurrentSample == 5000)
+            {
+                OC1RS = 1*(PERIOD_20KHZ+1);
+                REVERSE_BIT = 0;
+            }
+            // else if (iCurrentSample == 3000)
+            // {
+            //     OC1RS = 0.5*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 1;
+            // }
+            // else if (iCurrentSample == 4000)
+            // {
+            //     OC1RS = 0.07*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 1;
+            // }
+            // else if (iCurrentSample == 5000)
+            // {
+            //     OC1RS = 0.07*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 6000)
+            // {
+            //     OC1RS = 0.2*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 7000)
+            // {
+            //     OC1RS = 0.7*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 7500)
+            // {
+            //     OC1RS = 0.8*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 8000)
+            // {
+            //     OC1RS = 0.95*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 8500)
+            // {
+            //     OC1RS = 0.99*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+            // else if (iCurrentSample == 9000)
+            // {
+            //     OC1RS = 1*(PERIOD_20KHZ+1);
+            //     REVERSE_BIT = 0;
+            // }
+
+            if (iCurrentSample < numTestSamples)
+            {
+                testSamples[iCurrentSample] = actualCurrent;
+                iCurrentSample++;
+            }
+            else
+            {
+                setMode(IDLE);
+                iCurrentSample = 0;
+            }
+            
         }
 
         default:
@@ -160,4 +253,15 @@ void setRefCurrent(float newCurrent)
 
 float getSampledCurrent() {
     return actualCurrent;
+}
+
+void setNumTestSamples(int n)
+{
+    numTestSamples = n;
+}
+
+void getTestSample(int index, float *sample, float *ref)
+{
+    *sample = testSamples[index];
+    *ref = testRef[index];
 }
