@@ -22,7 +22,6 @@ int main()
   encoderInit();
   positionCtrlInit();
   iSenseInit();
-  PWMInit();
   currentControlInit();
 
   __builtin_enable_interrupts();
@@ -146,10 +145,14 @@ int main()
         int i;
         float sample;
         float refSignal;
+        float u;
+        float e;
         for (i = 0; i < 100; i++)  // ITEST is hardcoded for 100 samples (.02 seconds)
         {
-          getTestSample(i, &sample, &refSignal);
-          sprintf(buffer, "%f %f\r\n", sample, refSignal);
+          //getTestSample(i, &sample, &refSignal);
+          //sprintf(buffer, "%f %f\r\n", sample, refSignal);
+          getFullTestSample(i, &sample, &refSignal, &u, &e);
+          sprintf(buffer, "%f %f %f %f\r\n", sample, refSignal, u, e);
           NU32_WriteUART3(buffer);
         }
         
@@ -229,7 +232,7 @@ int main()
         sscanf(buffer, "%d", &numSamples);
 
         setNumTestSamples(numSamples);
-        setPWM(-100); // set duty cycle for testing
+        setPWM(0); // set duty cycle for testing
         setMode(SAMPLE);
         while (getMode() == SAMPLE)
         {
@@ -243,7 +246,7 @@ int main()
         for (i = 0; i < numSamples; i++)
         {
           getTestSample(i, &sample, &refSignal);
-          sprintf(buffer, "%f\r\n", sample);
+          sprintf(buffer, "%f %f\r\n", sample, refSignal);
           NU32_WriteUART3(buffer);
         }
 

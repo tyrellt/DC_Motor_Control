@@ -93,11 +93,7 @@ while ~has_quit
             n = [n1; n2];
             fprintf(mySerial, '%f %f\n', n);
             n = fscanf(mySerial,'%f');   % get sum
-            if (n ~= n1 + n2)
-                fprintf('Current gain set FAILED.');
-            else
-                fprintf('Current gains successfully set.');
-            end
+            fprintf('Current gains successfully set.');
 
         case 'h'
             % Get current gains
@@ -113,11 +109,7 @@ while ~has_quit
             n = [n1; n2; n3];
             fprintf(mySerial, '%f %f %f\n', n);
             n = fscanf(mySerial,'%f');   % get sum
-            if (n ~= n1 + n2 + n3)
-                fprintf('Position gain set FAILED.');
-            else
-                fprintf('Position gains successfully set.');
-            end
+            fprintf('Position gains successfully set.');
 
         case 'j'
             % Get position gains
@@ -130,21 +122,32 @@ while ~has_quit
             % Test current control
             currentSamples = [];
             refSignal = [];
+            u = [];
+            e = [];
             for i = 1:100
-                 n = fscanf(mySerial,'%f %f');
+%                  n = fscanf(mySerial,'%f %f');
+%                  currentSamples = [currentSamples n(1)];
+%                  refSignal = [refSignal n(2)];
+                 n = fscanf(mySerial,'%f %f %f %f');
                  currentSamples = [currentSamples n(1)];
                  refSignal = [refSignal n(2)];
+                 u = [u n(3)];
+                 e = [e n(4)];
+
             end
             
             close all;
             figure(1);
             hold on;
             t = linspace(0, 20, 100); % time in ms
-            plot(t, currentSamples);
-            plot(t, refSignal);
+            stairs(t, currentSamples);
+            stairs(t, refSignal);
             ylabel('Current (mA)');
             xlabel('Time (ms)');
-            legend('actual', 'reference');
+            stairs(t, u);
+            %stairs(t, e);
+            plot(t, zeros(length(t)), '--');
+            legend('actual', 'reference', 'u');%, 'e');
             hold off;
             
 
@@ -195,20 +198,25 @@ while ~has_quit
             numSamples = input('Enter number of samples: ');
             fprintf(mySerial, '%d\n', numSamples);
             currentSamples = [];
+            ref = [];
             for i = 1:numSamples
-                 n = fscanf(mySerial,'%f');
-                 currentSamples = [currentSamples n];
+                 n = fscanf(mySerial,'%f %f');
+                 currentSamples = [currentSamples n(1)];
+                 ref = [ref n(2)];
             end
             
             %plotFFT(currentSamples);
             close all;
             figure(1);
             hold on;
-            plot(currentSamples);
+            stairs(currentSamples);
             leng = length(currentSamples);
-            plot(zeros(1,leng));
+            stairs(ref);
             ylabel('current (mA)');
             xlabel('sample number');
+            legend('filtered','raw');
+            hold off;
+            
             
         case 'x'    % display menu
             fprintf('PIC32 MOTOR DRIVER INTERFACE\n\n');

@@ -4,7 +4,7 @@
 unsigned int readCurrentCounts();
 
 // Returns current in mA
-float readCurrent();
+float readCurrent(int shouldFilter);
 void iSenseInit();
 
 #endif

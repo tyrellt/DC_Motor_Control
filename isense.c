@@ -3,7 +3,7 @@
 #include "fir.h"
 
 #define FILTER_ORDER 4
-#define COUNTS_AT_0MA 504
+#define COUNTS_AT_0MA 507
 #define MA_PER_COUNT 4.7433
 
 static firFilter filter;
@@ -22,18 +22,27 @@ unsigned int readCurrentCounts()
 }
 
 // returns current in mA
-float readCurrent()
+float readCurrent(int shouldFilter)
 {
-    int total = 0;
-    int i;
-    int numSamples = 5;
-    for (i = 0; i < numSamples; i++)
-    {
-        total += readCurrentCounts();
-    }
+    // int total = 0;
+    // int i;
+    // int numSamples = 5;
+    // for (i = 0; i < numSamples; i++)
+    // {
+    //     total += readCurrentCounts();
+    // }
 
-    float average = (float)total / (float)numSamples;
-    float filteredAvg = applyFIR(&filter, average);     // filter reading with 200 Hz cutoff
+    // float average = (float)total / (float)numSamples;
+    float filteredAvg;
+    if (shouldFilter)
+    {
+        filteredAvg = applyFIR(&filter, readCurrentCounts());//average);     // filter reading with 200 Hz cutoff
+    }
+    else
+    {
+        filteredAvg = readCurrentCounts();
+    }
+    
 
     return (filteredAvg - COUNTS_AT_0MA) * MA_PER_COUNT;   // Equation from linear regression test
 }
@@ -47,7 +56,7 @@ void iSenseInit()
     AD1CON1bits.ASAM = 0;                   // Manual Sampling
     AD1CON1bits.ADON = 1;                   // turn on A/D converter
 
-    float b[FILTER_ORDER + 1] = {0.0345, 0.2405, 0.45, 0.2405, 0.0345}; // 200 Hz cutoff
+    float b[FILTER_ORDER + 1] = {0.0350, 0.2407, 0.4485, 0.2407, 0.0350};//{0.0345, 0.2405, 0.45, 0.2405, 0.0345}; // 200 Hz cutoff
         
     firInit(&filter, b, FILTER_ORDER);
 }

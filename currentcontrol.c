@@ -18,11 +18,17 @@ static volatile float ki;
 //static volatile float kd;
 static volatile float refCurrent = 0.0;
 static volatile float actualCurrent = 0.0;
+static volatile float rawCurrent = 0.0;
 
 // for sample testing
 static float testSamples[MAX_TEST_SAMPLES];
 static float testRef[MAX_TEST_SAMPLES];
 static volatile int numTestSamples = 0;
+static float testU[MAX_TEST_SAMPLES];
+static float testE[MAX_TEST_SAMPLES];
+
+
+static volatile char buffer[200];
 
 
 int setPWM(int dutyCycle) {
@@ -50,14 +56,15 @@ void PWMInit()
     // Timer2 setup
     PR2 = PERIOD_20KHZ;               //              set period register
     TMR2 = 0;                       //              initialize count to 0
-    T2CONbits.ON = 1;               //              turn on Timer2
+                   //              turn on Timer2
     //T2CONbits.TCKPS = 0b111;        // 256 prescaler. ONLY FOR TESTING!!
 
     // Output Compare setup
     OC1CONbits.OCM = 0b110;  // PWM mode without fault pin; other OC1CON bits are defaults
     OC1CONbits.OCTSEL = 0;   // Timer2 selected as clock source
-    OC1RS = .5*(PERIOD_20KHZ+1);            // OC1RS = (duty cycle)*(PR2+1)
-    OC1R = .5*(PERIOD_20KHZ+1);              // initialize before turning OC1 on; afterward it is read-only
+    OC1RS = 0.0*(PERIOD_20KHZ+1);            // OC1RS = (duty cycle)*(PR2+1)
+    OC1R = 0.0*(PERIOD_20KHZ+1);              // initialize before turning OC1 on; afterward it is read-only
+    T2CONbits.ON = 1;
     OC1CONbits.ON = 1;       // turn on OC1
 
     // Initialize motor direction bit
@@ -83,11 +90,14 @@ void currentControlInit()
     IPC1bits.T1IS = 0;              //             subpriority
     IFS0bits.T1IF = 0;              // INT step 5: clear interrupt flag
     IEC0bits.T1IE = 1;              // Enable interrupt
+
+    PWMInit();
 }
 
 void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void) 
 {
-    actualCurrent = readCurrent();  // get filtered current reading
+    actualCurrent = readCurrent(1);  // get filtered current reading
+    rawCurrent = readCurrent(0);
     switch(getMode())
     {
         case IDLE:
@@ -105,9 +115,14 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
         case ITEST:
         {
             static int count = 0;
+            static float eIntMAX = 0.0;
+            static float eInt = 0.0;       // initial error integral
             if (count == 0)
             {
                 refCurrent = 200.0;
+                eInt = 0.0;
+                eIntMAX = MAX_U/ki; // calculate new eIntMAX based on ki
+                REVERSE_BIT = 0;
             }
             else if (count >= 99)
             {
@@ -122,12 +137,21 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             }
 
             // PI control
-            static float eInt = 0;       // initial error integral
-
-            float e = refCurrent - actualCurrent;    // error in mA
-            eInt = eInt + e;                  // calculate new error integral
-            float u = kp*e + ki*eInt;     // PI control signal
             
+            float e = refCurrent - actualCurrent;    // error in mA
+            eInt += e;                  // calculate new error integral
+            if (eInt > eIntMAX)
+            {
+                eInt = eIntMAX;
+            }
+            else if (eInt < -eIntMAX)
+            {
+                eInt = -eIntMAX;
+            }
+            
+            float u = kp*e + ki*eInt;     // PI control signal
+            testU[count] = u;
+
             int isReverse = 0;
             if (u < 0.0)
             {
@@ -137,15 +161,17 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
 
             if (u > MAX_U)
             {
-                u = MAX_U;    // saturate at 1.0;
+                u = MAX_U;    // saturate at MAX_U
             }
 
             REVERSE_BIT = isReverse;
             OC1RS = u/MAX_U*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+            TMR2 = 0;
 
             // store actual and reference data
             testSamples[count] = actualCurrent;
             testRef[count] = refCurrent;
+            testE[count] = e;
 
             count++;
 
@@ -155,16 +181,16 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
         case SAMPLE:
         {
             static int iCurrentSample = 0;
-            if (iCurrentSample == 5000)
+            if (iCurrentSample == 400)
             {
-                OC1RS = 1*(PERIOD_20KHZ+1);
+                OC1RS = 1.0*(PERIOD_20KHZ+1);
                 REVERSE_BIT = 0;
             }
-            // else if (iCurrentSample == 3000)
-            // {
-            //     OC1RS = 0.5*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 1;
-            // }
+            else if (iCurrentSample == 700)
+            {
+                OC1RS = 0.2*(PERIOD_20KHZ+1);
+                REVERSE_BIT = 1;
+            }
             // else if (iCurrentSample == 4000)
             // {
             //     OC1RS = 0.07*(PERIOD_20KHZ+1);
@@ -209,6 +235,7 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             if (iCurrentSample < numTestSamples)
             {
                 testSamples[iCurrentSample] = actualCurrent;
+                testRef[iCurrentSample] = rawCurrent;
                 iCurrentSample++;
             }
             else
@@ -264,4 +291,12 @@ void getTestSample(int index, float *sample, float *ref)
 {
     *sample = testSamples[index];
     *ref = testRef[index];
+}
+
+void getFullTestSample(int index, float *sample, float *ref, float *u, float *e)
+{
+    *sample = testSamples[index];
+    *ref = testRef[index];
+    *u = testU[index];
+    *e = testE[index];
 }
