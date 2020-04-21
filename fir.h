@@ -7,6 +7,7 @@ typedef struct {
     int p;  // filter order
     float b[MAX_FILTER_ORDER + 1];  // filter coefficients
     float sBuffer[MAX_FILTER_ORDER + 1]; // buffer of p+1 past samples, including current sample
+    int isFirstSample; // flag to indicate if the sample is the first 
 } firFilter;
 
 void firInit(firFilter *filter, float *coefficients, int order);

@@ -2,7 +2,7 @@
 #include <xc.h>
 #include "fir.h"
 
-#define FILTER_ORDER 4
+#define FILTER_ORDER 2
 #define COUNTS_AT_0MA 507
 #define MA_PER_COUNT 4.7433
 
@@ -26,7 +26,7 @@ float readCurrent(int shouldFilter)
 {
     // int total = 0;
     // int i;
-    // int numSamples = 5;
+    // int numSamples = 3;
     // for (i = 0; i < numSamples; i++)
     // {
     //     total += readCurrentCounts();
@@ -36,7 +36,7 @@ float readCurrent(int shouldFilter)
     float filteredAvg;
     if (shouldFilter)
     {
-        filteredAvg = applyFIR(&filter, readCurrentCounts());//average);     // filter reading with 200 Hz cutoff
+        filteredAvg = applyFIR(&filter, readCurrentCounts());     // filter reading with 200 Hz cutoff
     }
     else
     {
@@ -49,14 +49,16 @@ float readCurrent(int shouldFilter)
 
 void iSenseInit() 
 {
-    AD1PCFGbits.PCFG9 = 0;                 // Set AN9 as an adc pin
+    AD1PCFGbits.PCFG9 = 0;                  // Set AN9 as an adc pin
     AD1CON3bits.ADCS = 2;                   // ADC clock period is Tad = 2*(ADCS+1)*Tpb =
-                                          //                           2*3*12.5ns = 75ns
+                                            //                           2*3*12.5ns = 75ns
     AD1CON1bits.SSRC = 0b111;               // Automatic conversion
     AD1CON1bits.ASAM = 0;                   // Manual Sampling
     AD1CON1bits.ADON = 1;                   // turn on A/D converter
 
-    float b[FILTER_ORDER + 1] = {0.0350, 0.2407, 0.4485, 0.2407, 0.0350};//{0.0345, 0.2405, 0.45, 0.2405, 0.0345}; // 200 Hz cutoff
+    float b[FILTER_ORDER + 1] = {0.0683, 0.8633, 0.0683};
+                                //{0.0540, 0.8920, 0.0540}; 100 Hz cutoff
+                                //{0.0683, 0.8633, 0.0683}; 200 Hz cutoff
         
     firInit(&filter, b, FILTER_ORDER);
 }

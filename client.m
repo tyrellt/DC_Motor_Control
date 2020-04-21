@@ -132,7 +132,7 @@ while ~has_quit
                  currentSamples = [currentSamples n(1)];
                  refSignal = [refSignal n(2)];
                  u = [u n(3)];
-                 e = [e n(4)];
+                 %e = [e n(4)];
 
             end
             
@@ -144,10 +144,10 @@ while ~has_quit
             stairs(t, refSignal);
             ylabel('Current (mA)');
             xlabel('Time (ms)');
-            stairs(t, u);
+            %stairs(t, u);
             %stairs(t, e);
             plot(t, zeros(length(t)), '--');
-            legend('actual', 'reference', 'u');%, 'e');
+            legend('actual', 'reference');%, 'u');%, 'e');
             hold off;
             
 

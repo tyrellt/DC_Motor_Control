@@ -9,6 +9,7 @@ void firInit(firFilter *filter, float *coefficients, int order)
         filter->b[i] = coefficients[i];
         filter->sBuffer[i] = 0.0;    // initialize all previous samples to 0
     }
+    filter->isFirstSample = 1;
 
 }
 
@@ -16,11 +17,19 @@ void firInit(firFilter *filter, float *coefficients, int order)
 void shiftInSample(firFilter *filter, float sample)
 {
     int i;
+
     for (i = filter->p; i > 0; i--)  // start at oldest sample and shift (bigger array index = older sample)
     {
-        filter->sBuffer[i] = filter->sBuffer[i - 1];
+        if (filter->isFirstSample)
+        {
+            filter->sBuffer[i] = 150;    // if this is the first sample, initialize entire buffer to match sample
+        }
+        else
+        {
+            filter->sBuffer[i] = filter->sBuffer[i - 1];
+        }
     }
-
+    filter->isFirstSample = 0;       // The next sample will not be the first sample
     filter->sBuffer[0] = sample;     // put in newest sample in posiiton 0
 }
 

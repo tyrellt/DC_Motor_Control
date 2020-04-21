@@ -90,6 +90,10 @@ void currentControlInit()
     IPC1bits.T1IS = 0;              //             subpriority
     IFS0bits.T1IF = 0;              // INT step 5: clear interrupt flag
     IEC0bits.T1IE = 1;              // Enable interrupt
+    
+    // Decent default values for a decent tracking.
+    kp = 0.3;
+    ki = 0.03;
 
     PWMInit();
 }
@@ -97,7 +101,7 @@ void currentControlInit()
 void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void) 
 {
     actualCurrent = readCurrent(1);  // get filtered current reading
-    rawCurrent = readCurrent(0);
+    //rawCurrent = readCurrent(0);
     switch(getMode())
     {
         case IDLE:
@@ -165,7 +169,8 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             }
 
             REVERSE_BIT = isReverse;
-            OC1RS = u/MAX_U*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+
+            OC1RS = (u/MAX_U)*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
             TMR2 = 0;
 
             // store actual and reference data
