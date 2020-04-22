@@ -132,7 +132,7 @@ while ~has_quit
                  currentSamples = [currentSamples n(1)];
                  refSignal = [refSignal n(2)];
                  u = [u n(3)];
-                 %e = [e n(4)];
+                 e = [e n(4)];
 
             end
             

@@ -11,7 +11,6 @@ void currentCntlInit();
 float setCurrentGains(float newKp, float newKi);
 PIDInfo getCurrentGains();
 void setRefCurrent(float newCurrent);
-
 // returns filtered current sampled at 5kHz in current control loop
 float getSampledCurrent();
 

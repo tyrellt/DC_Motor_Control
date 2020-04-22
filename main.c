@@ -162,12 +162,13 @@ int main()
       case 'l':
       {
         // Go to angle (deg)
-        setMode(HOLD);
         float angle = 0.0;
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%f", &angle);
         
+        resetEncoder();     // hold angle will be measured from current position
         setHoldAngle(angle);
+        setMode(HOLD);
 
         sprintf(buffer, "%f\r\n", angle); //only for testing
         NU32_WriteUART3(buffer);

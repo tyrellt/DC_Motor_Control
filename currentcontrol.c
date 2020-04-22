@@ -10,6 +10,7 @@
 
 #define REVERSE_BIT LATDbits.LATD1
 #define MAX_U 100.0
+#define EINT_MAX 3333   // MAX_U / ki where ki = 0.03 (default)
 
 
 // Variables needed in ISR, so volitile
@@ -29,6 +30,39 @@ static float testE[MAX_TEST_SAMPLES];
 
 
 static volatile char buffer[200];
+
+static void PICalculation(float error)
+{
+    static float eInt = 0.0;       // initial error integral
+    eInt += error;                  // calculate new error integral
+    if (eInt > EINT_MAX)
+    {
+        eInt = EINT_MAX;
+    }
+    else if (eInt < -EINT_MAX)
+    {
+        eInt = -EINT_MAX;
+    }
+    
+    float u = kp*error + ki*eInt;     // PI control signal
+
+    int isReverse = 0;
+    if (u < 0.0)
+    {
+        isReverse = 1;
+        u *= -1;    // make u positive
+    }
+
+    if (u > MAX_U)
+    {
+        u = MAX_U;    // saturate at MAX_U
+    }
+
+    REVERSE_BIT = isReverse;
+
+    // Update duty cycle
+    OC1RS = (u/MAX_U)*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
+}
 
 
 int setPWM(int dutyCycle) {
@@ -119,13 +153,10 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
         case ITEST:
         {
             static int count = 0;
-            static float eIntMAX = 0.0;
-            static float eInt = 0.0;       // initial error integral
+           
             if (count == 0)
             {
                 refCurrent = 200.0;
-                eInt = 0.0;
-                eIntMAX = MAX_U/ki; // calculate new eIntMAX based on ki
                 REVERSE_BIT = 0;
             }
             else if (count >= 99)
@@ -143,43 +174,23 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             // PI control
             
             float e = refCurrent - actualCurrent;    // error in mA
-            eInt += e;                  // calculate new error integral
-            if (eInt > eIntMAX)
-            {
-                eInt = eIntMAX;
-            }
-            else if (eInt < -eIntMAX)
-            {
-                eInt = -eIntMAX;
-            }
-            
-            float u = kp*e + ki*eInt;     // PI control signal
-            testU[count] = u;
-
-            int isReverse = 0;
-            if (u < 0.0)
-            {
-                isReverse = 1;
-                u *= -1;    // make u positive
-            }
-
-            if (u > MAX_U)
-            {
-                u = MAX_U;    // saturate at MAX_U
-            }
-
-            REVERSE_BIT = isReverse;
-
-            OC1RS = (u/MAX_U)*(PERIOD_20KHZ+1);    // OC1RS = (duty cycle)*(PR2+1)
-            TMR2 = 0;
-
             // store actual and reference data
             testSamples[count] = actualCurrent;
             testRef[count] = refCurrent;
             testE[count] = e;
 
+            PICalculation(e);
+
             count++;
 
+            break;
+        }
+
+        case HOLD:
+        {
+            float e = refCurrent - actualCurrent;
+            PICalculation(e);
+            
             break;
         }
 
