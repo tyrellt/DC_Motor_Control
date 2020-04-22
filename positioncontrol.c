@@ -18,7 +18,8 @@ static volatile float ki;
 static volatile float kd;
 static volatile float holdAngle;      // desired hold angle (set by user)
 
-static int trajectory[2000]; // TODO: I feel like this is a waste of memory
+static float trajectory[2000];
+static int trajLength = 0;
 
 static void PIDCalculation(float error)
 {
@@ -75,6 +76,31 @@ void __ISR(_TIMER_5_VECTOR, IPL5SOFT) positionCtrlLoop(void)
             PIDCalculation(e);
             break;
         }
+
+        case TRACK:
+        {
+            static int i = 0;
+            if (i < trajLength)
+            {
+                float e = trajectory[i] - readEncoder();
+                PIDCalculation(e);
+                i++;
+            }
+            else
+            {
+                holdAngle = trajectory[i];
+                i = 0;
+                setMode(HOLD);
+            }
+
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+
     }
 
     IFS0bits.T5IF = 0;  // clear interrupt flag
@@ -99,9 +125,10 @@ PIDInfo getPositionGains()
     return posGains;
 }
 
-int addTrajPoint(int point, int index)
+float addTrajPoint(float point, int index)
 {
     trajectory[index] = point;
+    trajLength = index + 1;     // this way the trajLength doesn't have to be reset when a new trajectory is read in
     return trajectory[index];
 }
 

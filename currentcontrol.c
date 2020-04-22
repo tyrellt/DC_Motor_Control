@@ -187,6 +187,7 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
         }
 
         case HOLD:
+        case TRACK:     // behavior is identical for HOLD and TRACK modes
         {
             float e = refCurrent - actualCurrent;
             PICalculation(e);
@@ -264,7 +265,6 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
 
         default:
         {
-
             break;
         }
 

@@ -255,14 +255,12 @@ function loadTrajectory(serial, type)
         fprintf(serial, '%d\n', 0);    % error code for pic
     else
         % call genRef with step option and send result to PIC
-        refTraj = genRef(traj, type) * 100;   % refTraj stored as integer
-                                                % in hundredths of
-                                                % a degree
+        refTraj = genRef(traj, type);   % refTraj stored as float
 
         fprintf(serial, '%d\n', length(refTraj)); % send length
         for i = 1:length(refTraj)
-            fprintf(serial, '%d\n', refTraj(i));
-            fprintf('Point stored in PIC: %d\n', fscanf(serial, '%d'));
+            fprintf(serial, '%f\n', refTraj(i));
+            %fprintf('Point stored in PIC: %f\n', fscanf(serial, '%f'));
         end
     end
 end

@@ -178,19 +178,20 @@ int main()
       case 'm':
       case 'n':
       {
-        // Load step trajectory
+        // Load step or cubic trajectory
         int numSamples = 0;
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%d", &numSamples);
         if (numSamples > 0) {
-          int sample = 0;
+          float sample = 0.0;
           int i;
           for (i = 0; i < numSamples; i++)
           {
             NU32_ReadUART3(buffer, BUF_SIZE);
-            sscanf(buffer, "%d", &sample);
-            sprintf(buffer, "%d\r\n", addTrajPoint(sample, i));
-            NU32_WriteUART3(buffer);
+            sscanf(buffer, "%f", &sample);
+            addTrajPoint(sample, i);
+            //sprintf(buffer, "%f\r\n", addTrajPoint(sample, i));
+            //NU32_WriteUART3(buffer);
           }
         }
         break;
@@ -199,6 +200,7 @@ int main()
       case 'o':
       {
         // Execute trajectory
+        resetEncoder();
         setMode(TRACK);
         break;
       }
