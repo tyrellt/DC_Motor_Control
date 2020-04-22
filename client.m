@@ -28,7 +28,7 @@ fprintf('Opening port %s....\n',port);
 
 % settings for opening the serial port. baud rate 230400, hardware flow control
 % wait up to 120 seconds for data before timing out
-mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',5); 
+mySerial = serial(port, 'BaudRate', 230400, 'FlowControl', 'hardware','Timeout',15); 
 % opens serial connection
 fopen(mySerial);
 % closes serial port when function exits
@@ -120,37 +120,8 @@ while ~has_quit
 
         case 'k'
             % Test current control
-            currentSamples = [];
-            refSignal = [];
-            u = [];
-            e = [];
-            for i = 1:100
-%                  n = fscanf(mySerial,'%f %f');
-%                  currentSamples = [currentSamples n(1)];
-%                  refSignal = [refSignal n(2)];
-                 n = fscanf(mySerial,'%f %f %f %f');
-                 currentSamples = [currentSamples n(1)];
-                 refSignal = [refSignal n(2)];
-                 u = [u n(3)];
-                 e = [e n(4)];
-
-            end
+            itestPlot(mySerial);
             
-            close all;
-            figure(1);
-            hold on;
-            t = linspace(0, 20, 100); % time in ms
-            stairs(t, currentSamples);
-            stairs(t, refSignal);
-            ylabel('Current (mA)');
-            xlabel('Time (ms)');
-            %stairs(t, u);
-            %stairs(t, e);
-            plot(t, zeros(length(t)), '--');
-            legend('actual', 'reference');%, 'u');%, 'e');
-            hold off;
-            
-
         case 'l'
             % Go to angle (deg)
             n = input('Enter desired angle (in degrees): ');
@@ -169,6 +140,7 @@ while ~has_quit
 
         case 'o'
             % Execute trajectory
+            trajPlot(mySerial);
 
         case 'p'
             % Unpower the motor
@@ -249,7 +221,7 @@ end
 end
 
 function loadTrajectory(serial, type)
-    traj = input('Enter step trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ');
+    traj = input(['Enter ' type ' trajectory, in sec and degrees\n [time1, ang1; time2, ang2; ...]: ']);
     if (traj(end,1) > 10)
         fprintf('Error: Maximum trajectory time is 10 seconds\n');
         fprintf(serial, '%d\n', 0);    % error code for pic

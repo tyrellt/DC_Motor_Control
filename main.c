@@ -145,14 +145,12 @@ int main()
         int i;
         float sample;
         float refSignal;
-        float u;
-        float e;
-        for (i = 0; i < 100; i++)  // ITEST is hardcoded for 100 samples (.02 seconds)
+        sprintf(buffer, "%d\r\n", 100);   // ITEST is hardcoded for 100 samples (.02 seconds)
+        NU32_WriteUART3(buffer);          // send number of samples to client
+        for (i = 0; i < 100; i++)
         {
-          //getTestSample(i, &sample, &refSignal);
-          //sprintf(buffer, "%f %f\r\n", sample, refSignal);
-          getFullTestSample(i, &sample, &refSignal, &u, &e);
-          sprintf(buffer, "%f %f %f %f\r\n", sample, refSignal, u, e);
+          getITestSample(i, &sample, &refSignal);
+          sprintf(buffer, "%f %f\r\n", sample, refSignal);
           NU32_WriteUART3(buffer);
         }
         
@@ -183,6 +181,8 @@ int main()
         NU32_ReadUART3(buffer, BUF_SIZE);
         sscanf(buffer, "%d", &numSamples);
         if (numSamples > 0) {
+          setTrajLength(numSamples);
+
           float sample = 0.0;
           int i;
           for (i = 0; i < numSamples; i++)
@@ -202,6 +202,24 @@ int main()
         // Execute trajectory
         resetEncoder();
         setMode(TRACK);
+
+        while(getMode() == TRACK);  // wait for test to finish
+
+        // send samples to client
+        int i;
+        float sample;
+        float refSignal;
+        int length = getTrajLength();
+        sprintf(buffer, "%d\r\n", length);   // send number of samples to client
+        NU32_WriteUART3(buffer);
+        for (i = 0; i < length; i++)
+        {
+          getTrajSample(i, &sample, &refSignal);
+          sprintf(buffer, "%f %f\r\n", sample, refSignal);
+          NU32_WriteUART3(buffer);
+        }
+
+
         break;
       }
 
@@ -248,7 +266,7 @@ int main()
         float refSignal;
         for (i = 0; i < numSamples; i++)
         {
-          getTestSample(i, &sample, &refSignal);
+          getITestSample(i, &sample, &refSignal);
           sprintf(buffer, "%f %f\r\n", sample, refSignal);
           NU32_WriteUART3(buffer);
         }

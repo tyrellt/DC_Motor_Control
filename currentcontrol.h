@@ -16,8 +16,7 @@ float getSampledCurrent();
 
 // functions for sample testing
 void setNumTestSamples(int n);
-void getTestSample(int index, float *sample, float *ref);
-void getFullTestSample(int index, float *sample, float *ref, float *u, float *e);
+void getITestSample(int index, float *sample, float *ref);
 
 
 

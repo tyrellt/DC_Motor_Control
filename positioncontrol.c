@@ -18,7 +18,8 @@ static volatile float ki;
 static volatile float kd;
 static volatile float holdAngle;      // desired hold angle (set by user)
 
-static float trajectory[2000];
+static float trajDesired[2000];
+static float trajActual[2000];
 static int trajLength = 0;
 
 static void PIDCalculation(float error)
@@ -67,12 +68,13 @@ int positionCtrlInit()
 
 void __ISR(_TIMER_5_VECTOR, IPL5SOFT) positionCtrlLoop(void) 
 {
+    float posActual = readEncoder();
     switch (getMode())
     {
         case HOLD:
         {
             // PID control
-            float e = holdAngle - readEncoder();    // error in degrees
+            float e = holdAngle - posActual;    // error in degrees
             PIDCalculation(e);
             break;
         }
@@ -82,13 +84,14 @@ void __ISR(_TIMER_5_VECTOR, IPL5SOFT) positionCtrlLoop(void)
             static int i = 0;
             if (i < trajLength)
             {
-                float e = trajectory[i] - readEncoder();
+                float e = trajDesired[i] - posActual;
+                trajActual[i] = posActual;      // store actual position
                 PIDCalculation(e);
                 i++;
             }
             else
             {
-                holdAngle = trajectory[i];
+                holdAngle = trajDesired[i-1];
                 i = 0;
                 setMode(HOLD);
             }
@@ -127,14 +130,31 @@ PIDInfo getPositionGains()
 
 float addTrajPoint(float point, int index)
 {
-    trajectory[index] = point;
-    trajLength = index + 1;     // this way the trajLength doesn't have to be reset when a new trajectory is read in
-    return trajectory[index];
+    trajDesired[index] = point;
+    return trajDesired[index];
+}
+
+void setTrajLength(int length)
+{
+    trajLength = length;
+}
+
+int getTrajLength()
+{
+    return trajLength;
+}
+
+void getTrajSample(int index, float *sample, float *ref)
+{
+    *sample = trajActual[index];
+    *ref = trajDesired[index];
 }
 
 void setHoldAngle(float angle)  //angle parameter is in degrees
 {
     holdAngle = angle;
 }
+
+
 
 

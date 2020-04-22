@@ -303,16 +303,8 @@ void setNumTestSamples(int n)
     numTestSamples = n;
 }
 
-void getTestSample(int index, float *sample, float *ref)
+void getITestSample(int index, float *sample, float *ref)
 {
     *sample = testSamples[index];
     *ref = testRef[index];
-}
-
-void getFullTestSample(int index, float *sample, float *ref, float *u, float *e)
-{
-    *sample = testSamples[index];
-    *ref = testRef[index];
-    *u = testU[index];
-    *e = testE[index];
 }
