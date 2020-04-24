@@ -24,15 +24,6 @@ unsigned int readCurrentCounts()
 // returns current in mA
 float readCurrent(int shouldFilter)
 {
-    // int total = 0;
-    // int i;
-    // int numSamples = 3;
-    // for (i = 0; i < numSamples; i++)
-    // {
-    //     total += readCurrentCounts();
-    // }
-
-    // float average = (float)total / (float)numSamples;
     float filteredAvg;
     if (shouldFilter)
     {
@@ -43,7 +34,6 @@ float readCurrent(int shouldFilter)
         filteredAvg = readCurrentCounts();
     }
     
-
     return (filteredAvg - COUNTS_AT_0MA) * MA_PER_COUNT;   // Equation from linear regression test
 }
 
@@ -56,9 +46,7 @@ void iSenseInit()
     AD1CON1bits.ASAM = 0;                   // Manual Sampling
     AD1CON1bits.ADON = 1;                   // turn on A/D converter
 
-    float b[FILTER_ORDER + 1] = {0.0683, 0.8633, 0.0683};
-                                //{0.0540, 0.8920, 0.0540}; 100 Hz cutoff
-                                //{0.0683, 0.8633, 0.0683}; 200 Hz cutoff
+    float b[FILTER_ORDER + 1] = {0.0683, 0.8633, 0.0683};   // coefficients of 2nd order low pass with 200 Hz cutoff
         
     firInit(&filter, b, FILTER_ORDER);
 }

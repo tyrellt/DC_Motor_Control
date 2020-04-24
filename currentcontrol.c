@@ -2,7 +2,6 @@
 #include "utilities.h"
 #include "NU32.h"
 #include "isense.h"
-#include <math.h>
 
 #define PERIOD_5HZ 62499    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 256
 #define PERIOD_5KHZ 1999    // PR = (desiredPeriod / prescaler * 80 MHz) - 1, prescaler 8
@@ -22,14 +21,9 @@ static volatile float actualCurrent = 0.0;
 static volatile float rawCurrent = 0.0;
 
 // for sample testing
-static float testSamples[MAX_TEST_SAMPLES];
-static float testRef[MAX_TEST_SAMPLES];
+static volatile float testSamples[MAX_TEST_SAMPLES];
+static volatile float testRef[MAX_TEST_SAMPLES];
 static volatile int numTestSamples = 0;
-static float testU[MAX_TEST_SAMPLES];
-static float testE[MAX_TEST_SAMPLES];
-
-
-static volatile char buffer[200];
 
 static void PICalculation(float error)
 {
@@ -90,15 +84,14 @@ void PWMInit()
     // Timer2 setup
     PR2 = PERIOD_20KHZ;               //              set period register
     TMR2 = 0;                       //              initialize count to 0
-                   //              turn on Timer2
-    //T2CONbits.TCKPS = 0b111;        // 256 prescaler. ONLY FOR TESTING!!
+    T2CONbits.ON = 1;               //              turn on Timer2
+
 
     // Output Compare setup
     OC1CONbits.OCM = 0b110;  // PWM mode without fault pin; other OC1CON bits are defaults
     OC1CONbits.OCTSEL = 0;   // Timer2 selected as clock source
     OC1RS = 0.0*(PERIOD_20KHZ+1);            // OC1RS = (duty cycle)*(PR2+1)
     OC1R = 0.0*(PERIOD_20KHZ+1);              // initialize before turning OC1 on; afterward it is read-only
-    T2CONbits.ON = 1;
     OC1CONbits.ON = 1;       // turn on OC1
 
     // Initialize motor direction bit
@@ -118,7 +111,6 @@ void currentControlInit()
     TMR1 = 0;                       //              initialize count to 0
     T1CONbits.ON = 1;               //              turn on Timer1
     T1CONbits.TCKPS = 0b01;          // 1:8 prescaler select
-    //T1CONbits.TCKPS = 0b11;        // 256 prescaler. ONLY FOR TESTING!!
 
     IPC1bits.T1IP = 6;              // INT step 4: priority
     IPC1bits.T1IS = 0;              //             subpriority
@@ -177,7 +169,6 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             // store actual and reference data
             testSamples[count] = actualCurrent;
             testRef[count] = refCurrent;
-            testE[count] = e;
 
             PICalculation(e);
 
@@ -192,79 +183,6 @@ void __ISR(_TIMER_1_VECTOR, IPL6SOFT) currentCtrlLoop(void)
             float e = refCurrent - actualCurrent;
             PICalculation(e);
             
-            break;
-        }
-
-        case SAMPLE:
-        {
-            static int iCurrentSample = 0;
-            if (iCurrentSample == 400)
-            {
-                OC1RS = 1.0*(PERIOD_20KHZ+1);
-                REVERSE_BIT = 0;
-            }
-            else if (iCurrentSample == 700)
-            {
-                OC1RS = 0.2*(PERIOD_20KHZ+1);
-                REVERSE_BIT = 1;
-            }
-            // else if (iCurrentSample == 4000)
-            // {
-            //     OC1RS = 0.07*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 1;
-            // }
-            // else if (iCurrentSample == 5000)
-            // {
-            //     OC1RS = 0.07*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 6000)
-            // {
-            //     OC1RS = 0.2*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 7000)
-            // {
-            //     OC1RS = 0.7*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 7500)
-            // {
-            //     OC1RS = 0.8*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 8000)
-            // {
-            //     OC1RS = 0.95*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 8500)
-            // {
-            //     OC1RS = 0.99*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-            // else if (iCurrentSample == 9000)
-            // {
-            //     OC1RS = 1*(PERIOD_20KHZ+1);
-            //     REVERSE_BIT = 0;
-            // }
-
-            if (iCurrentSample < numTestSamples)
-            {
-                testSamples[iCurrentSample] = actualCurrent;
-                testRef[iCurrentSample] = rawCurrent;
-                iCurrentSample++;
-            }
-            else
-            {
-                setMode(IDLE);
-                iCurrentSample = 0;
-            }
-            
-        }
-
-        default:
-        {
             break;
         }
 

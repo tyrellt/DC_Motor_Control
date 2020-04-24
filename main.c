@@ -190,8 +190,6 @@ int main()
             NU32_ReadUART3(buffer, BUF_SIZE);
             sscanf(buffer, "%f", &sample);
             addTrajPoint(sample, i);
-            //sprintf(buffer, "%f\r\n", addTrajPoint(sample, i));
-            //NU32_WriteUART3(buffer);
           }
         }
         break;
@@ -245,35 +243,6 @@ int main()
         break;
       }
 
-      case 's':
-      {
-        // Sample current sensor for use with filter calculations
-        int numSamples;
-        NU32_ReadUART3(buffer, BUF_SIZE);
-        sscanf(buffer, "%d", &numSamples);
-
-        setNumTestSamples(numSamples);
-        setPWM(0); // set duty cycle for testing
-        setMode(SAMPLE);
-        while (getMode() == SAMPLE)
-        {
-          // wait until sampling is done
-        }
-
-        // send samples to client
-        int i;
-        float sample;
-        float refSignal;
-        for (i = 0; i < numSamples; i++)
-        {
-          getITestSample(i, &sample, &refSignal);
-          sprintf(buffer, "%f %f\r\n", sample, refSignal);
-          NU32_WriteUART3(buffer);
-        }
-
-        break;
-      }
-      
       case 'y': // another dummy command
       {
         int n1, n2 = 0;

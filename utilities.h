@@ -15,8 +15,7 @@ typedef enum {
     PWM = 1,
     ITEST = 2,
     HOLD = 3,
-    TRACK = 4,
-    SAMPLE = 5
+    TRACK = 4
 } OpMode;
 
 void setMode(OpMode mode);

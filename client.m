@@ -13,9 +13,6 @@ function client()
 %
 %   For convenience, you may want to change this so that the port is hardcoded.
 
-% constants
-MAX_TRAJ_POSITIONS = 20;    % if this is changed, it needs to be changed in main.c as well
-
 % Opening COM connection
 if ~isempty(instrfind)
     fclose(instrfind);
@@ -163,32 +160,7 @@ while ~has_quit
                 otherwise  % case 4
                     mode = 'TRACK';
             end
-            fprintf('mode: %s\n', mode);
-            
-        case 's'
-            % Sample current sensor for use with filter calculations
-            numSamples = input('Enter number of samples: ');
-            fprintf(mySerial, '%d\n', numSamples);
-            currentSamples = [];
-            ref = [];
-            for i = 1:numSamples
-                 n = fscanf(mySerial,'%f %f');
-                 currentSamples = [currentSamples n(1)];
-                 ref = [ref n(2)];
-            end
-            
-            %plotFFT(currentSamples);
-            close all;
-            figure(1);
-            hold on;
-            stairs(currentSamples);
-            leng = length(currentSamples);
-            stairs(ref);
-            ylabel('current (mA)');
-            xlabel('sample number');
-            legend('filtered','raw');
-            hold off;
-            
+            fprintf('mode: %s\n', mode);   
             
         case 'x'    % display menu
             fprintf('PIC32 MOTOR DRIVER INTERFACE\n\n');
@@ -202,13 +174,11 @@ while ~has_quit
             fprintf('     m: Load step trajectory       n: Load cubic trajectory\n');
             fprintf('     o: Execute trajectory         p: Unpower the motor\n');
             fprintf('     q: Quit client                r: Get mode\n');
-            fprintf('     s: Sample for filter          x: Display Menu\n');
+            fprintf('     x: Display Menu\n');
   
         case 'y'                         % example operation
             n = input('Enter numbers: ', 's'); % get the numbers to send
             fprintf(mySerial, '%s\n',n); % send the numbers
-            %fprintf(mySerial, '%d\n', 4);
-            %fprintf(mySerial, '%d\n', 5);
             n = fscanf(mySerial,'%d');   % get the sum back
             fprintf('Read: %d\n',n);     % print it to the screen
   
@@ -232,7 +202,6 @@ function loadTrajectory(serial, type)
         fprintf(serial, '%d\n', length(refTraj)); % send length
         for i = 1:length(refTraj)
             fprintf(serial, '%f\n', refTraj(i));
-            %fprintf('Point stored in PIC: %f\n', fscanf(serial, '%f'));
         end
     end
 end
