@@ -1,6 +1,6 @@
 # DC_Motor_Control
 
-This project was done as part of the requirements of ME EN 6240 Advanced Mechatronics at the University of Utah.
+This project was done as part of the requirements of ME EN 6240 Advanced Mechatronics at the University of Utah, taught by Dr. Tommaso Lenzi.
 
 The purpose of the project is to perform position control on a brushed DC motor using a PIC32 microcontroller. Bootloader code for PIC provided by Northwestern Robotics from Northwestern University (see NU32.org). 
 
