@@ -11,3 +11,5 @@ Closed loop PI current control is performed in a 5 kHz ISR using the current sen
 Closed loop PID position control is performed at 200 Hz using the encoder feedback. The encoder value is read from the encoder chip using SPI. 
 
 A MATLAB client with a simple UI is used to talk to the PIC via UART. The client also handles trajectory generation and plotting of data.
+
+A demo video titled demo.mp4 has been uploaded to this repo.
